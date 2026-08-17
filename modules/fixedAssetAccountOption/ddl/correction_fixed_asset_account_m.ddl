@@ -2,34 +2,32 @@
 
 -- DROP TABLE IF EXISTS public.correction_fixed_asset_account_m;
 
-CREATE TABLE IF NOT EXISTS public.correction_fixed_asset_account_m
-(
-    fixed_asset_account_id smallint NOT NULL,
-    before_correction_string character varying(64) COLLATE pg_catalog."default" NOT NULL,
-    after_correction_string character varying(64) COLLATE pg_catalog."default",
-    insertdatetime timestamp without time zone,
-    updatedatetime timestamp without time zone,
-    updateuser character varying(32) COLLATE pg_catalog."default",
-    CONSTRAINT correction_fixed_asset_account_m_pkey1 PRIMARY KEY (fixed_asset_account_id)
-)
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[correction_fixed_asset_account_m]') AND type in (N'U'))
+BEGIN
+CREATE TABLE [dbo].[correction_fixed_asset_account_m] (
+    [fixed_asset_account_id] smallint NOT NULL,
+    [before_correction_string] nvarchar(64) NOT NULL,
+    [after_correction_string] nvarchar(64),
+    [insertdatetime] datetime,
+    [updatedatetime] datetime,
+    [updateuser] nvarchar(32),
+    CONSTRAINT [correction_fixed_asset_account_m_pkey1] PRIMARY KEY CLUSTERED ([fixed_asset_account_id] ASC)
+    );
+END
+GO
 
-TABLESPACE pg_default;
+-- index: before_correction_string
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = N'airead_correction_fixed_asset_account_m_before_correction_strin' AND object_id = OBJECT_ID(N'[dbo].[correction_fixed_asset_account_m]'))
+BEGIN
+CREATE INDEX [airead_correction_fixed_asset_account_m_before_correction_strin]
+    ON [dbo].[correction_fixed_asset_account_m] ([before_correction_string] ASC);
+END
+GO
 
-ALTER TABLE IF EXISTS public.correction_fixed_asset_account_m
-    OWNER to postgres;
--- Index: airead_correction_fixed_asset_account_m_before_correction_strin
-
--- DROP INDEX IF EXISTS public.airead_correction_fixed_asset_account_m_before_correction_strin;
-
-CREATE INDEX IF NOT EXISTS airead_correction_fixed_asset_account_m_before_correction_strin
-    ON public.correction_fixed_asset_account_m USING btree
-    (before_correction_string COLLATE pg_catalog."default" ASC NULLS LAST)
-    TABLESPACE pg_default;
--- Index: airead_correction_fixed_asset_account_m_fixed_asset_account_id
-
--- DROP INDEX IF EXISTS public.airead_correction_fixed_asset_account_m_fixed_asset_account_id;
-
-CREATE INDEX IF NOT EXISTS airead_correction_fixed_asset_account_m_fixed_asset_account_id
-    ON public.correction_fixed_asset_account_m USING btree
-    (fixed_asset_account_id ASC NULLS LAST)
-    TABLESPACE pg_default;
+-- index: fixed_asset_account_id
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = N'airead_correction_fixed_asset_account_m_fixed_asset_account_id' AND object_id = OBJECT_ID(N'[dbo].[correction_fixed_asset_account_m]'))
+BEGIN
+CREATE INDEX [airead_correction_fixed_asset_account_m_fixed_asset_account_id]
+    ON [dbo].[correction_fixed_asset_account_m] ([fixed_asset_account_id] ASC);
+END
+GO
