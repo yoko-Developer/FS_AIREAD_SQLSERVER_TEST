@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: batch
+  main:
+    web-application-type: none
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=ocr_db;encrypt=false;trustServerCertificate=true
+    username: sa
+    password: "sqlserver"
+    driverClassName: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    show-sql: false
+logging:
+  level:
+    com.zaxxer.hikari: warn
+  file:
+    name: logs/cpapi.log
+  appender.console.encoding: UTF-8
+app:
+  isValid: true
+  matchFile: ../conf/additional_legal_strings.lst

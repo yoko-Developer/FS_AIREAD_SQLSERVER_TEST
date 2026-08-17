@@ -1,0 +1,10 @@
+depreciation_code,depreciation_name,depreciation_name_view,insertdatetime,updatedatetime,updateuser
+1,旧定額法,旧定額法,,,
+2,旧定率法,旧定率法,,,
+3,新定額法,新定額法,,,
+4,19年定率法,19年定率法,,,
+5,24年定率法,24年定率法,,,
+6,リース定額法,リース定額法,,,
+7,少額減価償却資産,少額減価償却資産,,,
+8,一括償却資産,一括償却資産,,,
+9,非償却,非償却,,,

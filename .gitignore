@@ -1,0 +1,56 @@
+# ===== ルート共通 .gitignore =====
+# 各プロジェクト個別の .gitignore に加え、リポジトリ横断で除外するパターンをまとめる。
+# 既に追跡済みのファイルには影響しない（git は追跡を継続する）。
+
+# --- Maven / ビルド成果物 ---
+target/
+bin/
+obj/
+build/
+dependency-reduced-pom.xml
+*.class
+
+# --- IDE / ツール設定 ---
+.idea/
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+.springBeans
+.sts4-cache/
+.kiro/
+.claude/
+
+# --- ログ ---
+logs/
+log/
+*.log
+
+# --- ドキュメント類（バージョン管理対象外） ---
+docs/
+*_GUIDE.md
+ANALYSIS_REPORT.md
+OCR_VERSION_DETECTION_SPEC.md
+
+# --- 開発用サンプル / テストデータ（バージョン管理対象外） ---
+sample/
+sample_before/
+sample_after/
+test_data/
+test_samples/
+
+# --- バックアップ / 一時ファイル ---
+*.bak
+*.bak-*
+*.tmp
+temp_log.txt
+endobj
+
+# --- 生成された DB レポートのスナップショット ---
+db_report.txt
+db_report_new.txt
+
+# --- OS ---
+.DS_Store
+Thumbs.db

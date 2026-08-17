@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: batch
+  main:
+    web-application-type: none
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=ocr_db;encrypt=false;trustServerCertificate=true
+    username: sa
+    password: "sqlserver"
+    driverClassName: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        bytecode:
+          use_reflection_optimizer: false
+        enhancer:
+          enableDirtyTracking: false
+          enableLazyInitialization: false
+          enableAssociationManagement: false
+      javax:
+        persistence:
+          sharedCache:
+            mode: NONE
+      jakarta:
+        persistence:
+          sharedCache:
+            mode: NONE
+    open-in-view: false
+logging:
+  level:
+    com.zaxxer.hikari: warn
+  file:
+    name: C:/AIRead/AIRead_API/logs/cpapi.log
+  appender.console.encoding: UTF-8
+app:
+  isValid: true
+  matchFile: ../conf/additional_legal_strings.lst
