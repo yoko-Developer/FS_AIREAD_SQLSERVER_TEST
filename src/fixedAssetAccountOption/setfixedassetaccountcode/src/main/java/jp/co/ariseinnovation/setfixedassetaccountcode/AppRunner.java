@@ -155,8 +155,4 @@ public class AppRunner implements ApplicationRunner {
             }
         }
     }
-
-
-    static {
-    }
 }

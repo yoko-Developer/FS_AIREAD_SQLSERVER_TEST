@@ -1,19 +1,16 @@
 package jp.co.ariseinnovation.setfixedassetaccountcode.dao;
 
-import java.util.List;
-import java.util.Optional;
-
+import jp.co.ariseinnovation.setfixedassetaccountcode.entity.CorrectionFixedAssetAccountMEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import jp.co.ariseinnovation.setfixedassetaccountcode.entity.CorrectionFixedAssetAccountMEntity;
+import java.util.List;
 
-/**
- * 4.2.5 固定資産科補正マスタのDAO
- */
 @Repository
 public interface CorrectionFixedAssetAccountMDao extends JpaRepository<CorrectionFixedAssetAccountMEntity, String> {
-    // @Query("select o from FixedAssetAccountMEntity o where o.formTypeId = :formTypeId")
-    // List<FixedAssetAccountMEntity> searchByFormTypeId(String formTypeId);
+
+    @Query(value = "select * from correction_fixed_asset_account_m where correction_fixed_asset_account_name LIKE CONCAT('%', :correctionFixedAssetAccountName, '%')", nativeQuery = true)
+    List<CorrectionFixedAssetAccountMEntity> searchByCorrectionFixedAssetAccountName(@Param("correctionFixedAssetAccountName") String correctionFixedAssetAccountName);
 }
