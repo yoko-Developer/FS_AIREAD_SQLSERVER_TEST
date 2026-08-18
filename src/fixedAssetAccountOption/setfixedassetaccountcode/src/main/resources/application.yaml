@@ -2,10 +2,10 @@ spring:
   application:
     name: setfixedassetaccountcode
   datasource:
-    url: jdbc:postgresql://localhost:5432/kanjou_ph3
-    username: postgres
-    password: "x5WU7Xb3"
-    driverClassName: org.postgresql.Driver
+    url: jdbc:sqlserver://localhost;instanceName=SQLEXPRESS;databaseName=kanjou_ph3;encrypt=true;trustServerCertificate=true
+    username: sa
+    password: password
+    driverClassName: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     show-sql: false
 logging:
