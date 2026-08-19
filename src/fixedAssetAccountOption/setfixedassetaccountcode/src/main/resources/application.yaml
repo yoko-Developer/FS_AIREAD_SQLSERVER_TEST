@@ -15,7 +15,7 @@ csv:
 # DB接続先を"postgresql" または "sqlserver" から選択
 # ===============================================
 database:
-  type: sqlserver
+  type: postgresql
 
 spring:
   application:
