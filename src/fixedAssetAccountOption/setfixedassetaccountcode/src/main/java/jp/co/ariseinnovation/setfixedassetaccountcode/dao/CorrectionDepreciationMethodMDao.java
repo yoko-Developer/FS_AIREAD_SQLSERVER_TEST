@@ -9,8 +9,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CorrectionDepreciationMethodMDao extends JpaRepository<CorrectionDepreciationMethodMEntity, Short> {
+public interface CorrectionDepreciationMethodMDao
+        extends JpaRepository<CorrectionDepreciationMethodMEntity, String> {
 
     @Query(value = "select * from correction_depreciation_method_m where :beforeString LIKE CONCAT('%', before_correction_string, '%')", nativeQuery = true)
-    List<CorrectionDepreciationMethodMEntity> searchByBeforeCorrectionString(@Param("beforeString") String beforeString);
+    List<CorrectionDepreciationMethodMEntity> searchByBeforeCorrectionString(
+            @Param("beforeString") String beforeString);
 }
