@@ -12,8 +12,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,42 +33,30 @@ import jp.co.ariseinnovation.setfixedassetaccountcode.service.CsvCreateService;
 
 @Component
 public class AppRunner implements ApplicationRunner {
+
     private final static org.slf4j.Logger log = LoggerFactory.getLogger(ApplicationRunner.class);
+
     @Autowired
     private CsvCreateService csvCreateService;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+
         var runArgs = args.getNonOptionArgs();
 
-        // 引数が2つ（入力パス、出力パス）でない場合はエラーにする
-        if (runArgs.isEmpty() || runArgs.size() != 2) {
-            log.error("起動引数の指定が不正です。「入力ディレクトリのパス」と「出力ディレクトリのパス」の2つを指定してください。");
-            throw new IllegalArgumentException("Invalid application arguments. Requires 2 arguments: inputPath and outputPath.");
+        if (runArgs.isEmpty() || runArgs.size() != 1) {
+            throw new Exception();
         }
 
-        var inputDir = runArgs.get(0);
-        var outputDir = runArgs.get(1);
+        var inputFilePath = runArgs.get(0) + "\\csv_AIRead";
 
-        exportCsv(inputDir, outputDir);
+        exportCsv(inputFilePath);
     }
 
-    private void exportCsv(String inputDirPath, String outputDirPath) throws FileNotFoundException, IOException {
-        // 入力ディレクトリのパス作成（\\csv_AIRead を結合）
-        Path inputFilePath = Paths.get(inputDirPath, "csv_AIRead");
-        File csvDir = inputFilePath.toFile();
+    private void exportCsv(String inputFilePath) throws FileNotFoundException, IOException {
 
-        // ディレクトリが存在しない場合のガード処理
-        if (!csvDir.exists() || !csvDir.isDirectory()) {
-            log.error("指定された入力ディレクトリが存在しません: " + csvDir.getAbsolutePath());
-            return;
-        }
-
-        // 出力ディレクトリが存在しない場合は作成しておく
-        File outDir = new File(outputDirPath);
-        if (!outDir.exists()) {
-            outDir.mkdirs();
-        }
+        // 入力ディレクトリ
+        File csvDir = new File(inputFilePath);
 
         // .csvでファイルを抽出
         FilenameFilter filter = new FilenameFilter() {
@@ -82,50 +68,70 @@ public class AppRunner implements ApplicationRunner {
 
         // CSVファイルの一覧を取得
         File[] csvList = csvDir.listFiles(filter);
+
         if (csvList == null) {
+            log.error("CSVファイルを取得できません: " + inputFilePath);
             return;
         }
 
         String bottomRowValue = null;
+
         for (File inputFile : csvList) {
+
             // 固定資産台帳判定
-            try (
-                    Stream<String> lines = Files.lines(inputFile.toPath())) {
+            try (Stream<String> lines = Files.lines(inputFile.toPath())) {
+
                 if (lines.noneMatch(line -> line.contains("05_010_00"))) {
-                    // 固定資産台帳以外なので終了
                     continue;
                 }
+
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
             }
 
-            // 入力CSVの読み込み
+            // 入力CSV
             Reader reader = new InputStreamReader(new FileInputStream(inputFile), StandardCharsets.UTF_8);
 
+            // CSVファイルの読み込み
             @SuppressWarnings("deprecation")
             CSVParser csvParser = CSVFormat.DEFAULT
-                    .withFirstRecordAsHeader()
-                    .parse(reader);
+                            .withFirstRecordAsHeader()
+                            .parse(reader);
 
             // "Value"の列番号を取得
             Integer valueColIndex = csvParser.getHeaderMap().get("Value");
+
             if (Objects.isNull(valueColIndex)) {
                 log.info("ヘッダ項目の形式が不正のため、処理を終了します");
                 reader.close();
                 return;
             }
+
             // Valueの結合情報
             Map<String, List<String>> groupedValues = new LinkedHashMap<>();
 
             // 金額情報
             Map<String, String> balanceValues = new LinkedHashMap<>();
 
+            // 償却方法情報
+            Map<String, String> depreciationMethodValues = new LinkedHashMap<>();
+
+            boolean alreadyProcessed = false;
+
             for (CSVRecord record : csvParser) {
-                if (StringUtils.equals(record.get("ItemName"), "fixedAssetAccountCode")) {
-                    log.info("fixedAssetAccountCode行追加済みのため、処理を終了します。");
-                    reader.close();
-                    return;
+
+                // すでに処理済みの場合は、このCSVファイルをスキップ
+                if (StringUtils.equals(
+                        record.get("ItemName"),
+                        "fixedAssetAccountCode")) {
+
+                    log.info(
+                            "fixedAssetAccountCode行追加済みのため、このCSVファイルをスキップします。");
+
+                    alreadyProcessed = true;
+                    break;
                 }
+
                 String grupId = record.get("GrupID");
 
                 if (StringUtils.equals(grupId, "-1")) {
@@ -135,49 +141,120 @@ public class AppRunner implements ApplicationRunner {
                 String page = record.get("Page");
                 String gId = record.get("GID");
 
-                // page、gId, grupIdを結合
-                String checkKeys = page + "|" + gId + "|" + grupId;
-                // page、gId, grupIdごとのValueをまとめる(6件まで)
-                if (groupedValues.computeIfAbsent(checkKeys, k -> new ArrayList<>()).size() <= 6) {
+                String checkKeys =
+                        page + "|" + gId + "|" + grupId;
+
+                // 償却方法情報をまとめる
+                if (StringUtils.equals(
+                        record.get("ItemName"),
+                        "方法")) {
+
+                    depreciationMethodValues.put(
+                            checkKeys,
+                            record.get("Value"));
+                }
+
+                if (groupedValues
+                        .computeIfAbsent(
+                                checkKeys,
+                                k -> new ArrayList<>())
+                        .size() <= 6) {
+
                     groupedValues
-                            .computeIfAbsent(checkKeys, k -> new ArrayList<>())
+                            .computeIfAbsent(
+                                    checkKeys,
+                                    k -> new ArrayList<>())
                             .add(record.get("Value"));
                 }
+
                 // 金額情報をまとめる
-                if (StringUtils.equals(record.get("ItemName"), "取得価額")) {
-                    balanceValues.put(checkKeys, record.get("Value"));
+                if (StringUtils.equals(
+                        record.get("ItemName"),
+                        "取得価額")) {
+
+                    balanceValues.put(
+                            checkKeys,
+                            record.get("Value"));
                 }
             }
-            reader.close();
 
-            // レコード生成処理
-            List<List<String>> fixedAssetAccountCodeRecords = csvCreateService.createRecord(groupedValues, balanceValues, valueColIndex, bottomRowValue);
-
-            // 最終行のValueを取得
-            if (!fixedAssetAccountCodeRecords.isEmpty()) {
-                bottomRowValue = fixedAssetAccountCodeRecords.get(fixedAssetAccountCodeRecords.size() - 1).get(valueColIndex);
+            if (alreadyProcessed) {
+                reader.close();
+                continue;
             }
 
-            // 出力先のファイルを決定（出力ディレクトリの中に同名ファイルを作成する等）
-            File outputFile = new File(outDir, inputFile.getName());
+            reader.close();
 
-            // 入力ファイルをコピーするか、新規に出力先へ書き込む形にする
-            Files.copy(inputFile.toPath(), outputFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            // 科目コード＋償却方法区分コード生成
+            List<List<String>> fixedAssetAccountCodeRecords =
+                    csvCreateService.createRecord(
+                            groupedValues,
+                            balanceValues,
+                            depreciationMethodValues,
+                            valueColIndex,
+                            bottomRowValue);
 
-            var bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile, true), "UTF-8"));
+            /*
+             * 次ページへ引き継ぐ科目コードを取得。
+             * depreciationCode行ではなく、
+             * fixedAssetAccountCode行の最後のValueだけを保持する。
+             */
+            for (int i = fixedAssetAccountCodeRecords.size() - 1;
+                 i >= 0;
+                 i--) {
+
+                List<String> record =
+                        fixedAssetAccountCodeRecords.get(i);
+
+                if (!record.isEmpty()
+                        && StringUtils.equals(
+                        record.get(0),
+                        "fixedAssetAccountCode")) {
+
+                    bottomRowValue =
+                            record.get(valueColIndex);
+
+                    break;
+                }
+            }
+
+            // CSVへ追記
+            var bw =
+                    new BufferedWriter(
+                            new OutputStreamWriter(
+                                    new FileOutputStream(
+                                            inputFile,
+                                            true),
+                                    StandardCharsets.UTF_8));
+
             try {
-                for (List<String> fixedAssetAccountCodeRecord : fixedAssetAccountCodeRecords) {
-                    for (int j = 0; j < fixedAssetAccountCodeRecord.size(); j++) {
-                        bw.write("\"" + fixedAssetAccountCodeRecord.get(j) + "\"");
-                        if (j != fixedAssetAccountCodeRecord.size() - 1) {
+
+                for (List<String> outputRecord
+                        : fixedAssetAccountCodeRecords) {
+
+                    for (int j = 0;
+                         j < outputRecord.size();
+                         j++) {
+
+                        bw.write(
+                                "\""
+                                        + outputRecord.get(j)
+                                        + "\"");
+
+                        if (j != outputRecord.size() - 1) {
                             bw.write(",");
                         }
                     }
+
                     bw.newLine();
                 }
+
             } catch (Exception e) {
+
                 log.error(e.getMessage(), e);
+
             } finally {
+
                 bw.close();
             }
         }

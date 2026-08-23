@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+logging:
+  level:
+    com.zaxxer.hikari: warn
+  file:
+    name: C:\AIRead_ETL\logs\setfixedassetaccountcode.log
+    appender.console.encoding: UTF-8
+
+csv:
+  outPath: C:\AIRead_Report\CSV\
+
+# ===============================================
+# DB接続先を"postgresql" または "sqlserver" から選択
+# ===============================================
+database:
+  type: sqlserver
+
+spring:
+  application:
+    name: setfixedassetaccountcode
+  datasource:
+    url: ${db.url.${database.type}}
+    username: ${db.username.${database.type}}
+    password: ${db.password.${database.type}}
+    driverClassName: ${db.driver.${database.type}}
+  jpa:
+    show-sql: false
+
+# --- DBごとの設定値 ---
+db:
+  url:
+    postgresql: jdbc:postgresql://localhost:5432/kanjou_ph3
+    sqlserver: jdbc:sqlserver://localhost;instanceName=SQLEXPRESS;databaseName=kanjou_ph3;encrypt=true;trustServerCertificate=true
+  username:
+    postgresql: postgres
+    sqlserver: sa
+  password:
+    postgresql: "x5WU7Xb3"
+    sqlserver: "password"
+  driver:
+    postgresql: org.postgresql.Driver
+    sqlserver: com.microsoft.sqlserver.jdbc.SQLServerDriver
